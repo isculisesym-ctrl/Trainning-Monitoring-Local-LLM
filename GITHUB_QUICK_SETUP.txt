@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════════════════════════
+                  GITHUB SETUP: 3 PASOS RÁPIDOS (5 minutos)
+═══════════════════════════════════════════════════════════════════════════════
+
+PASO 1: CREAR TOKEN DE GITHUB (3 minutos)
+─────────────────────────────────────────────────────────────────────────────
+1. Abre: https://github.com/settings/tokens
+2. Haz click: "Generate new token (classic)"
+3. Completa:
+   • Name: AI-Platform-Local
+   • Expiration: 90 days
+   • Scopes: ☑ repo
+4. Haz click: "Generate token"
+5. ⚠️ COPIA EL TOKEN (no podrás verlo después)
+
+RESULTADO: Tendrás un token como "ghp_xxx...xxx"
+
+
+PASO 2: CREAR REPOSITORIO EN GITHUB (1 minuto)
+─────────────────────────────────────────────────────────────────────────────
+1. Abre: https://github.com/new
+2. Completa:
+   • Repository name: AI-Platform
+   • Description: Production-ready Local LLM Infrastructure
+   • Visibility: ⚠️ PRIVATE (importante!)
+3. Haz click: "Create repository"
+
+RESULTADO: Tu repositorio en https://github.com/TU_USUARIO/AI-Platform
+
+
+PASO 3: HACER PUSH DESDE POWERSHELL (1 minuto)
+─────────────────────────────────────────────────────────────────────────────
+1. Abre PowerShell
+2. Ejecuta:
+
+   cd C:\Proyectos\AI-Platform
+   .\push-to-github.ps1
+
+3. Sigue las instrucciones:
+   • Ingresa tu usuario de GitHub
+   • Pega el token que copiaste en PASO 1
+
+RESULTADO: Tu código está en GitHub (PRIVADO)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿LISTO? AHORA EJECUTA:
+
+  1. PowerShell
+  2. cd C:\Proyectos\AI-Platform
+  3. .\push-to-github.ps1
+
+═══════════════════════════════════════════════════════════════════════════════

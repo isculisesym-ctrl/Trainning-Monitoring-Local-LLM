@@ -1,0 +1,179 @@
+# Docker Compose: AI-Platform (Phase 5 - Optional)
+# For local containerized deployment
+# Usage: docker-compose up
+
+version: '3.8'
+
+services:
+  # Main Gateway Service
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: ai-platform-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - GATEWAY_HOST=0.0.0.0
+      - GATEWAY_PORT=8000
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CACHE_TYPE=file
+      - DEBUG=False
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data/cache:/app/data/cache
+      - ./data/logs:/app/data/logs
+      - ./data/templates:/app/data/templates
+    depends_on:
+      - ollama
+    networks:
+      - ai-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Ollama Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-platform-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_NUM_GPU=1
+      - OLLAMA_MAX_VRAM=4294967296
+      - OLLAMA_KEEP_ALIVE=5m
+    volumes:
+      - ollama-storage:/root/.ollama
+    devices:
+      - /dev/nvidia0:/dev/nvidia0  # GPU access (Linux)
+      # For Windows: WSL2 GPU support required
+    networks:
+      - ai-platform
+    restart: unless-stopped
+
+  # Optional: Redis for Caching (Phase 2)
+  redis:
+    image: redis:7-alpine
+    container_name: ai-platform-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-storage:/data
+    networks:
+      - ai-platform
+    restart: unless-stopped
+    profiles:
+      - redis  # Use: docker-compose --profile redis up
+
+  # Optional: PostgreSQL for History (Phase 3)
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai-platform-postgres
+    environment:
+      - POSTGRES_DB=ai_platform
+      - POSTGRES_USER=ai_user
+      - POSTGRES_PASSWORD=ai_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-storage:/var/lib/postgresql/data
+    networks:
+      - ai-platform
+    restart: unless-stopped
+    profiles:
+      - database  # Use: docker-compose --profile database up
+
+  # Optional: Prometheus for Monitoring (Phase 2)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-platform-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-storage:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ai-platform
+    restart: unless-stopped
+    profiles:
+      - monitoring  # Use: docker-compose --profile monitoring up
+
+  # Optional: Grafana for Dashboards (Phase 2)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-platform-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - ai-platform
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+networks:
+  ai-platform:
+    driver: bridge
+
+volumes:
+  ollama-storage:
+  redis-storage:
+  postgres-storage:
+  prometheus-storage:
+  grafana-storage:
+
+# Usage Examples:
+# ==============
+#
+# Start basic services (gateway + ollama):
+#   docker-compose up -d
+#
+# Start with Redis caching:
+#   docker-compose --profile redis up -d
+#
+# Start with all services:
+#   docker-compose --profile redis --profile database --profile monitoring up -d
+#
+# View logs:
+#   docker-compose logs -f gateway
+#   docker-compose logs -f ollama
+#
+# Stop services:
+#   docker-compose down
+#
+# Remove volumes (clean slate):
+#   docker-compose down -v
+#
+# Rebuild after code changes:
+#   docker-compose build --no-cache
+#   docker-compose up -d
+#
+# Execute commands:
+#   docker-compose exec gateway python -m pytest tests/
+#   docker-compose exec ollama ollama list
+#
+# Check service status:
+#   docker-compose ps
+#
+# Access services:
+#   Gateway: http://localhost:8000/api/health
+#   Ollama: http://localhost:11434/api/tags
+#   Prometheus: http://localhost:9090
+#   Grafana: http://localhost:3000
+#   PostgreSQL: localhost:5432 (ai_user / ai_password)
+#   Redis: localhost:6379
+

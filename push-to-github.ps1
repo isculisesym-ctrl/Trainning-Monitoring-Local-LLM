@@ -1,159 +1,76 @@
-# Push AI-Platform to GitHub
-# Este script configura y hace push del repositorio a GitHub
-
-Write-Host "`n" -ForegroundColor Cyan
-Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║        PUSH AI-PLATFORM A GITHUB (PRIVADO)                ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+# Push AI-Platform a GitHub - Script Simple
+Write-Host ""
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "  PUSH AI-PLATFORM A GITHUB" -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Paso 1: Verificar que estamos en el repo correcto
-Write-Host "✓ Verificando repositorio local..." -ForegroundColor Yellow
-cd C:\Proyectos\AI-Platform
-
+# Verificar que estamos en el repo correcto
 if (!(Test-Path ".git")) {
-    Write-Host "❌ ERROR: No se encontró .git - no estamos en un repositorio Git" -ForegroundColor Red
+    Write-Host "ERROR: No se encontro .git" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✓ Repositorio Git encontrado en: $(Get-Location)" -ForegroundColor Green
+Write-Host "OK: Repositorio Git encontrado" -ForegroundColor Green
 Write-Host ""
 
-# Paso 2: Mostrar estado actual
-Write-Host "✓ Estado actual del repositorio:" -ForegroundColor Yellow
-git status --short
+# Pedir usuario
+Write-Host "Tu usuario de GitHub:" -ForegroundColor Yellow
+$username = Read-Host
+
+# Pedir token
 Write-Host ""
-
-Write-Host "✓ Commits locales:" -ForegroundColor Yellow
-git log --oneline
-Write-Host ""
-
-# Paso 3: Pedir información de GitHub
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "PASO 1: Información de GitHub" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host ""
-
-$username = Read-Host "Ingresa tu usuario de GitHub"
-$confirm = Read-Host "¿El usuario es correcto? ($username) [S/n]"
-
-if ($confirm -eq "n" -or $confirm -eq "N") {
-    Write-Host "❌ Cancelado" -ForegroundColor Red
-    exit 1
-}
+Write-Host "Tu GitHub Personal Access Token:" -ForegroundColor Yellow
+Write-Host "(De: https://github.com/settings/tokens)" -ForegroundColor Gray
+$token = Read-Host
 
 Write-Host ""
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "PASO 2: Token de Autenticación" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Necesitas un GitHub Personal Access Token (PAT):" -ForegroundColor Yellow
-Write-Host "  1. Ve a: https://github.com/settings/tokens" -ForegroundColor Gray
-Write-Host "  2. Click: 'Generate new token (classic)'" -ForegroundColor Gray
-Write-Host "  3. Nombre: 'AI-Platform-Local'" -ForegroundColor Gray
-Write-Host "  4. Expiration: 90 days (o más)" -ForegroundColor Gray
-Write-Host "  5. Scopes: Check 'repo'" -ForegroundColor Gray
-Write-Host "  6. Click: 'Generate token'" -ForegroundColor Gray
-Write-Host "  7. COPIA el token" -ForegroundColor Gray
-Write-Host ""
+Write-Host "Configurando..." -ForegroundColor Yellow
 
-$token = Read-Host "Pega tu GitHub Personal Access Token (se ocultará)"
-Write-Host "(Token recibido)" -ForegroundColor Green
-Write-Host ""
+# Configurar remote
+$repoUrl = "https://github.com/$username/AI-Platform-Local.git"
 
-# Paso 3: Crear el repositorio remoto
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "PASO 3: Configurando Remote de GitHub" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host ""
+# Remover remote anterior si existe
+git remote remove origin 2>$null
 
-$repoUrl = "https://github.com/$username/AI-Platform.git"
-Write-Host "URL del repositorio: $repoUrl" -ForegroundColor Yellow
-
-# Verificar si el remote ya existe
-$existingRemote = git remote get-url origin 2>$null
-
-if ($existingRemote) {
-    Write-Host "El remote 'origin' ya existe: $existingRemote" -ForegroundColor Yellow
-    $overwrite = Read-Host "¿Deseas sobrescribir? [S/n]"
-
-    if ($overwrite -ne "n" -and $overwrite -ne "N") {
-        git remote remove origin
-        Write-Host "✓ Remote anterior removido" -ForegroundColor Green
-    } else {
-        Write-Host "Usando remote existente" -ForegroundColor Yellow
-    }
-}
-
-# Añadir el remote
+# Agregar nuevo remote
 git remote add origin $repoUrl
-Write-Host "✓ Remote configurado" -ForegroundColor Green
-Write-Host ""
 
-# Paso 4: Configurar credenciales temporales
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "PASO 4: Configurando Autenticación" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "OK: Remote configurado" -ForegroundColor Green
 
-# Crear URL con credenciales
-$authUrl = "https://${username}:${token}@github.com/$username/AI-Platform.git"
+# Crear URL con credenciales para push
+$authUrl = "https://${username}:${token}@github.com/$username/AI-Platform-Local.git"
+
+Write-Host ""
+Write-Host "Haciendo push a GitHub..." -ForegroundColor Yellow
+Write-Host ""
 
 # Hacer push
-Write-Host "Haciendo push de los commits a GitHub..." -ForegroundColor Yellow
-Write-Host ""
+& git push -u $authUrl master
 
-try {
-    # Intentar push con la URL autenticada
-    git push -u $authUrl main 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host ""
+    Write-Host "================================================" -ForegroundColor Green
+    Write-Host "  EXITO! Repositorio subido a GitHub" -ForegroundColor Green
+    Write-Host "================================================" -ForegroundColor Green
+    Write-Host ""
 
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host ""
-        Write-Host "✅ ÉXITO!" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Green
-        Write-Host "║      REPOSITORIO SUBIDO A GITHUB EXITOSAMENTE             ║" -ForegroundColor Green
-        Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "URL de tu repositorio (PRIVADO):" -ForegroundColor Cyan
-        Write-Host "  https://github.com/$username/AI-Platform" -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "Próximos pasos:" -ForegroundColor Cyan
-        Write-Host "  1. Verifica que sea PRIVADO en: https://github.com/$username/AI-Platform/settings" -ForegroundColor Gray
-        Write-Host "  2. Empieza con: START_HERE.md" -ForegroundColor Gray
-        Write-Host "  3. Sigue: INSTALLATION.md" -ForegroundColor Gray
-        Write-Host ""
-    } else {
-        Write-Host "❌ ERROR durante el push" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "Tu repositorio:" -ForegroundColor Cyan
+    Write-Host "  https://github.com/$username/AI-Platform" -ForegroundColor Yellow
+    Write-Host ""
 
-} catch {
-    Write-Host "❌ ERROR: $_" -ForegroundColor Red
-    exit 1
+    Write-Host "Proximos pasos:" -ForegroundColor Cyan
+    Write-Host "  1. Abre: START_HERE.md" -ForegroundColor Gray
+    Write-Host "  2. Sigue: INSTALLATION.md" -ForegroundColor Gray
+    Write-Host ""
+} else {
+    Write-Host ""
+    Write-Host "ERROR: Push fallido" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Verifica:" -ForegroundColor Yellow
+    Write-Host "  - Usuario correcto" -ForegroundColor Gray
+    Write-Host "  - Token valido" -ForegroundColor Gray
+    Write-Host "  - Repo existe en GitHub" -ForegroundColor Gray
+    Write-Host "  - Repo es PRIVADO" -ForegroundColor Gray
+    Write-Host ""
 }
-
-# Paso 5: Verificación
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "VERIFICACIÓN" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host ""
-
-Write-Host "Git remote:" -ForegroundColor Yellow
-git remote -v
-Write-Host ""
-
-Write-Host "Rama actual:" -ForegroundColor Yellow
-git branch -v
-Write-Host ""
-
-Write-Host "✓ Todo completado!" -ForegroundColor Green
-Write-Host ""
-Write-Host "RECUERDA:" -ForegroundColor Yellow
-Write-Host "  • Verifica que el repo es PRIVADO en GitHub Settings" -ForegroundColor Gray
-Write-Host "  • Tu token no aparece en Git (está solo en memoria)" -ForegroundColor Gray
-Write-Host "  • Para futuros pushes, usa: git push" -ForegroundColor Gray
-Write-Host ""
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "🚀 ¡Repositorio listo para el siguiente paso!" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════════════════════" -ForegroundColor Cyan

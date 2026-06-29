@@ -91,47 +91,48 @@ class TrainingLoop:
         logger.info('Training in progress...\n')
 
         try:
-            while datetime.now() < end_time:
-                exercise = exercise_list[exercise_index % len(exercise_list)]
-                exercise_index += 1
+            async with ollama_client:
+                while datetime.now() < end_time:
+                    exercise = exercise_list[exercise_index % len(exercise_list)]
+                    exercise_index += 1
 
-                elapsed = (datetime.now() - start_time).total_seconds() / 3600
-                logger.info(f'[{elapsed:.1f}h/{self.duration_hours}h] {exercise.title}')
+                    elapsed = (datetime.now() - start_time).total_seconds() / 3600
+                    logger.info(f'[{elapsed:.1f}h/{self.duration_hours}h] {exercise.title}')
 
-                try:
-                    _, user_prompt, _ = prompt_builder.build_exercise_prompts(exercise)
+                    try:
+                        _, user_prompt, _ = prompt_builder.build_exercise_prompts(exercise)
 
-                    response = await ollama_client.generate(
-                        prompt=user_prompt,
-                        temperature=self.config.GENERATION_TEMPERATURE,
-                        top_p=self.config.GENERATION_TOP_P,
-                        max_tokens=self.config.GENERATION_MAX_TOKENS
-                    )
+                        response = await ollama_client.generate(
+                            prompt=user_prompt,
+                            temperature=self.config.GENERATION_TEMPERATURE,
+                            top_p=self.config.GENERATION_TOP_P,
+                            max_tokens=self.config.GENERATION_MAX_TOKENS
+                        )
 
-                    result_dict = ResponseValidator.auto_evaluate(response, exercise)
+                        result_dict = ResponseValidator.auto_evaluate(response, exercise)
 
-                    result = ExerciseResult(
-                        exercise_id=exercise.id,
-                        quality_score=result_dict['quality_score'],
-                        success=result_dict['success'],
-                        timestamp=datetime.now(),
-                        patterns_found=result_dict['patterns_found'],
-                        patterns_total=result_dict['patterns_total'],
-                        regex_matched=result_dict['regex_matched'],
-                        regex_total=result_dict['regex_total'],
-                        requires_manual_review=result_dict['requires_manual_review'],
-                        response_length=len(response)
-                    )
+                        result = ExerciseResult(
+                            exercise_id=exercise.id,
+                            quality_score=result_dict['quality_score'],
+                            success=result_dict['success'],
+                            timestamp=datetime.now(),
+                            patterns_found=result_dict['patterns_found'],
+                            patterns_total=result_dict['patterns_total'],
+                            regex_matched=result_dict['regex_matched'],
+                            regex_total=result_dict['regex_total'],
+                            requires_manual_review=result_dict['requires_manual_review'],
+                            response_length=len(response)
+                        )
 
-                    self.session_metrics.add_result(result)
+                        self.session_metrics.add_result(result)
 
-                    status = '✓' if result.success else '✗'
-                    logger.info(f'  Score: {result.quality_score:.1f}/10 {status}')
+                        status = '[OK]' if result.success else '[ERROR]'
+                        logger.info(f'  Score: {result.quality_score:.1f}/10 {status}')
 
-                except Exception as e:
-                    logger.error(f'  Error: {e}')
+                    except Exception as e:
+                        logger.error(f'  Error: {e}')
 
-                await asyncio.sleep(0.5)
+                    await asyncio.sleep(0.5)
 
         except KeyboardInterrupt:
             logger.info('\n\nTraining paused by user')

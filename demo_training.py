@@ -137,53 +137,60 @@ async def demo_training():
         print("[ERROR] No exercises found!")
         return
 
-    for i, exercise in enumerate(demo_exercises, 1):
-        print(f"\n[{i}/{len(demo_exercises)}] Exercise: {exercise.title} ({exercise.level.value})")
-        print(f"      Category: {exercise.category}")
+    # Use context manager for Ollama client
+    async with OllamaClient(
+        base_url=config.OLLAMA_BASE_URL,
+        model=config.OLLAMA_MODEL,
+        timeout=config.OLLAMA_TIMEOUT
+    ) as ollama_client:
 
-        try:
-            # Build prompt with corpus injection
-            system_prompt, user_prompt, corpus_text = prompt_builder.build_exercise_prompts(exercise)
+        for i, exercise in enumerate(demo_exercises, 1):
+            print(f"\n[{i}/{len(demo_exercises)}] Exercise: {exercise.title} ({exercise.level.value})")
+            print(f"      Category: {exercise.category}")
 
-            # Generate response from Ollama
-            print(f"      Generating response... ", end="", flush=True)
-            response = await ollama_client.generate(
-                prompt=user_prompt,
-                temperature=config.GENERATION_TEMPERATURE,
-                top_p=config.GENERATION_TOP_P,
-                max_tokens=config.GENERATION_MAX_TOKENS
-            )
-            print(f"[OK] ({len(response)} chars)")
+            try:
+                # Build prompt with corpus injection
+                system_prompt, user_prompt, corpus_text = prompt_builder.build_exercise_prompts(exercise)
 
-            # Evaluate response
-            result_dict = ResponseValidator.auto_evaluate(response, exercise)
+                # Generate response from Ollama
+                print(f"      Generating response... ", end="", flush=True)
+                response = await ollama_client.generate(
+                    prompt=user_prompt,
+                    temperature=config.GENERATION_TEMPERATURE,
+                    top_p=config.GENERATION_TOP_P,
+                    max_tokens=config.GENERATION_MAX_TOKENS
+                )
+                print(f"[OK] ({len(response)} chars)")
 
-            # Record result
-            result = ExerciseResult(
-                exercise_id=exercise.id,
-                quality_score=result_dict["quality_score"],
-                success=result_dict["success"],
-                timestamp=datetime.now(),
-                patterns_found=result_dict["patterns_found"],
-                patterns_total=result_dict["patterns_total"],
-                regex_matched=result_dict["regex_matched"],
-                regex_total=result_dict["regex_total"],
-                requires_manual_review=result_dict["requires_manual_review"],
-                response_length=len(response)
-            )
+                # Evaluate response
+                result_dict = ResponseValidator.auto_evaluate(response, exercise)
 
-            session_metrics.add_result(result)
+                # Record result
+                result = ExerciseResult(
+                    exercise_id=exercise.id,
+                    quality_score=result_dict["quality_score"],
+                    success=result_dict["success"],
+                    timestamp=datetime.now(),
+                    patterns_found=result_dict["patterns_found"],
+                    patterns_total=result_dict["patterns_total"],
+                    regex_matched=result_dict["regex_matched"],
+                    regex_total=result_dict["regex_total"],
+                    requires_manual_review=result_dict["requires_manual_review"],
+                    response_length=len(response)
+                )
 
-            # Print evaluation
-            status = "[OK] PASS" if result.success else "[ERROR] FAIL"
-            print(f"      Score: {result.quality_score:.1f}/10 {status}")
-            print(f"      Patterns: {result.patterns_found}/{result.patterns_total}, Regex: {result.regex_matched}/{result.regex_total}")
+                session_metrics.add_result(result)
 
-        except Exception as e:
-            print(f"      [ERROR] Error: {e}")
-            import traceback
-            traceback.print_exc()
-            session_metrics.total_exercises += 1
+                # Print evaluation
+                status = "[OK] PASS" if result.success else "[ERROR] FAIL"
+                print(f"      Score: {result.quality_score:.1f}/10 {status}")
+                print(f"      Patterns: {result.patterns_found}/{result.patterns_total}, Regex: {result.regex_matched}/{result.regex_total}")
+
+            except Exception as e:
+                print(f"      [ERROR] Error: {e}")
+                import traceback
+                traceback.print_exc()
+                session_metrics.total_exercises += 1
 
     # 5. Summary
     print("\n" + "="*80)

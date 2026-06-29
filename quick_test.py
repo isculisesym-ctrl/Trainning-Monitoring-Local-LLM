@@ -21,6 +21,16 @@ r = requests.post(f"{OLLAMA}/chat",
 resp = r.json()["message"]["content"][:50]
 print(f"  Response: {resp} ...")
 
+# Test 3
+print("\n[OK] Test 3: Chat")
+r = requests.post(f"{OLLAMA}/chat",
+    json={"model": "neural-chat", "messages": [{"role": "user", "content": "Hola"}], "stream": False},
+    timeout=120)
+resp = r.json()["message"]["content"][:50]
+print(f"  Response: {resp} ...")   
+
+
+
 print("\n[PASS] Ollama working! You can now:")
 print("   - Use test_ollama.py for full test suite")
 print("   - Integrate into your projects (see OLLAMA_LOCAL_GUIDE.md)")

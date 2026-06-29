@@ -1,0 +1,412 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "corpus_focus": "architecture",
+    "total_exercises": 100,
+    "difficulty_distribution": {
+      "junior": 30,
+      "mid": 40,
+      "senior": 30
+    }
+  },
+  "exercises": [
+    {
+      "id": "arch_junior_001",
+      "level": "junior",
+      "category": "architecture",
+      "title": "Explain MVC Pattern",
+      "description": "Explain the Model-View-Controller pattern. What is the responsibility of each layer? Provide a simple example with code.",
+      "expected_patterns": ["mvc", "model", "view", "controller", "separation of concerns"],
+      "auto_eval_regex": [
+        "(?i)model.*data|database",
+        "(?i)view.*presentation|template",
+        "(?i)controller.*request|input"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "arch_junior_002",
+      "level": "junior",
+      "category": "architecture",
+      "title": "Design a Simple User Registration Flow",
+      "description": "Design a system for user registration. What are the main components? How do they interact?",
+      "expected_patterns": ["validation", "database", "error handling", "response"],
+      "auto_eval_regex": [
+        "(?i)validate",
+        "(?i)save|store",
+        "(?i)error|exception",
+        "(?i)return|response"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "arch_junior_003",
+      "level": "junior",
+      "category": "architecture",
+      "title": "Monolithic vs Microservices",
+      "description": "What's the difference between monolithic and microservices architecture? When would you use each?",
+      "expected_patterns": ["monolithic", "microservices", "deployment", "scalability", "coupling"],
+      "auto_eval_regex": [
+        "(?i)monolithic|single|one",
+        "(?i)micro|services|separate",
+        "(?i)deploy|scaling",
+        "(?i)coupling|depend"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "arch_mid_010",
+      "level": "mid",
+      "category": "architecture",
+      "title": "Implement Repository Pattern",
+      "description": "Implement the Repository pattern for a User entity. Show how to abstract database access. Include both mock and real implementations.",
+      "expected_patterns": ["interface", "abstraction", "database", "mock", "dependency injection"],
+      "auto_eval_regex": [
+        "(?i)interface|abstract|protocol",
+        "(?i)class.*repository",
+        "(?i)mock|test.*double",
+        "(?i)inject|constructor"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "arch_mid_011",
+      "level": "mid",
+      "category": "architecture",
+      "title": "Design Event-Driven System",
+      "description": "Design an event-driven order processing system. An order can be created, paid, shipped. Each state change triggers listeners.",
+      "expected_patterns": ["event", "listener", "observer", "async", "decoupling"],
+      "auto_eval_regex": [
+        "(?i)event|publish|subscribe",
+        "(?i)listener|handler|observer",
+        "(?i)async|await|callback",
+        "(?i)decoupled?|independent"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "arch_mid_012",
+      "level": "mid",
+      "category": "architecture",
+      "title": "CQRS Implementation",
+      "description": "Implement CQRS for a product catalog. Writes normalize data, reads denormalize for fast access. Show both sides.",
+      "expected_patterns": ["cqrs", "command", "query", "denormalize", "read model"],
+      "auto_eval_regex": [
+        "(?i)command|write",
+        "(?i)query|read",
+        "(?i)denormaliz",
+        "(?i)model.*read|write"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "arch_mid_013",
+      "level": "mid",
+      "category": "architecture",
+      "title": "Circuit Breaker Pattern",
+      "description": "Implement a circuit breaker for calling an unreliable external API. States: Closed, Open, Half-Open.",
+      "expected_patterns": ["circuit breaker", "state machine", "fallback", "resilience"],
+      "auto_eval_regex": [
+        "(?i)circuit|breaker",
+        "(?i)closed|open|half",
+        "(?i)fallback|default",
+        "(?i)threshold|count"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "arch_senior_025",
+      "level": "senior",
+      "category": "architecture",
+      "title": "Scale to 1M concurrent users - Architecture Design",
+      "description": "Design architecture for 1M concurrent users. Consider: load balancing, caching, database scaling, async processing, monitoring. Justify each decision.",
+      "expected_patterns": [
+        "load balancer",
+        "cache",
+        "database",
+        "sharding",
+        "async",
+        "monitoring",
+        "cdn",
+        "rate limiting"
+      ],
+      "auto_eval_regex": [
+        "(?i)load.*balance",
+        "(?i)cache|redis",
+        "(?i)shard|partition",
+        "(?i)async|queue",
+        "(?i)cdn|edge",
+        "(?i)rate.*limit"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "arch_senior_026",
+      "level": "senior",
+      "category": "architecture",
+      "title": "Data Consistency in Distributed Systems",
+      "description": "Design a payment system across multiple services. Address: transactions, consistency, compensating transactions, idempotency.",
+      "expected_patterns": [
+        "consistency",
+        "transactions",
+        "idempotent",
+        "saga pattern",
+        "compensating",
+        "eventual consistency"
+      ],
+      "auto_eval_regex": [
+        "(?i)transact|acid|saga",
+        "(?i)idempotent",
+        "(?i)compensat",
+        "(?i)consistent|consistency",
+        "(?i)eventual|eventual"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "arch_senior_027",
+      "level": "senior",
+      "category": "architecture",
+      "title": "Microservices Communication Strategy",
+      "description": "Compare sync (REST, gRPC) vs async (message queues, events) communication in microservices. When to use each? Design tradeoffs.",
+      "expected_patterns": [
+        "synchronous",
+        "asynchronous",
+        "rest",
+        "grpc",
+        "message queue",
+        "event driven",
+        "tradeoff",
+        "coupling"
+      ],
+      "auto_eval_regex": [
+        "(?i)sync|rest|grpc",
+        "(?i)async|queue|event",
+        "(?i)tradeoff|coupling|latency",
+        "(?i)consistency|eventual"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "scale_junior_030",
+      "level": "junior",
+      "category": "scalability",
+      "title": "Database Indexing Basics",
+      "description": "Explain database indexes. Why are they important? What's the tradeoff?",
+      "expected_patterns": ["index", "performance", "tradeoff", "storage", "write"],
+      "auto_eval_regex": [
+        "(?i)index|fast|slow",
+        "(?i)performance|query",
+        "(?i)tradeoff|cost|space",
+        "(?i)write.*slow|insert.*slow"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "scale_mid_040",
+      "level": "mid",
+      "category": "scalability",
+      "title": "Database Optimization",
+      "description": "Optimize a slow N+1 query. Show the problem and the solution with JOIN or eager loading.",
+      "expected_patterns": ["n+1", "join", "eager loading", "batch", "optimization"],
+      "auto_eval_regex": [
+        "(?i)n\\+1|loop.*query",
+        "(?i)join|eager|load",
+        "(?i)batch|bulk",
+        "(?i)optimi"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "scale_mid_041",
+      "level": "mid",
+      "category": "scalability",
+      "title": "Caching Strategy for E-commerce",
+      "description": "Design multi-layer caching for product catalog. Layers: in-memory, Redis, CDN. When each applies?",
+      "expected_patterns": ["cache", "redis", "cdn", "ttl", "invalidation", "layers"],
+      "auto_eval_regex": [
+        "(?i)cache|redis|memcached",
+        "(?i)cdn|edge",
+        "(?i)ttl|expir|invalidat",
+        "(?i)layer|l1|l2"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "scale_senior_050",
+      "level": "senior",
+      "category": "scalability",
+      "title": "Database Sharding Strategy",
+      "description": "Design sharding for user-based partitioning. Handle: shard key selection, consistent hashing, rebalancing. Tradeoffs vs Replication?",
+      "expected_patterns": [
+        "shard",
+        "partition",
+        "consistent hashing",
+        "rebalance",
+        "shard key",
+        "replication"
+      ],
+      "auto_eval_regex": [
+        "(?i)shard|partition|key",
+        "(?i)hash|consistent",
+        "(?i)rebalanc|reshard",
+        "(?i)replica|copy"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "security_junior_060",
+      "level": "junior",
+      "category": "security",
+      "title": "Password Hashing",
+      "description": "How should passwords be stored? What's wrong with MD5/SHA1? What's bcrypt?",
+      "expected_patterns": ["bcrypt", "hash", "salt", "slow", "argon2", "scrypt"],
+      "auto_eval_regex": [
+        "(?i)bcrypt|argon|scrypt",
+        "(?i)hash|salt|iteration",
+        "(?i)slow|cost|factor",
+        "(?i)md5|sha1.*wrong|bad"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "security_mid_070",
+      "level": "mid",
+      "category": "security",
+      "title": "JWT Implementation",
+      "description": "Implement JWT authentication. Cover: token creation, verification, refresh tokens, token revocation.",
+      "expected_patterns": ["jwt", "token", "refresh", "revoke", "verify", "secret"],
+      "auto_eval_regex": [
+        "(?i)jwt|json.*web",
+        "(?i)refresh|rotate",
+        "(?i)revoke|blacklist|invalidate",
+        "(?i)verify|decode"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "security_mid_071",
+      "level": "mid",
+      "category": "security",
+      "title": "SQL Injection Prevention",
+      "description": "Demonstrate SQL injection vulnerability and how parameterized queries prevent it.",
+      "expected_patterns": ["sql injection", "parameterized", "prepared statement", "vulnerable"],
+      "auto_eval_regex": [
+        "(?i)sql.*injection|vulnerable",
+        "(?i)parameterized|prepared|statement",
+        "(?i)escape|sanitize"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "security_senior_080",
+      "level": "senior",
+      "category": "security",
+      "title": "Zero Trust Architecture",
+      "description": "Design authentication/authorization for a system following Zero Trust principles. Assume breach. Verify everything.",
+      "expected_patterns": [
+        "zero trust",
+        "verify",
+        "authenticate",
+        "authorization",
+        "least privilege",
+        "audit"
+      ],
+      "auto_eval_regex": [
+        "(?i)zero.*trust|assume.*breach",
+        "(?i)verify|authenticate|authorize",
+        "(?i)least.*privilege",
+        "(?i)audit|log"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "patterns_junior_085",
+      "level": "junior",
+      "category": "patterns",
+      "title": "Factory Pattern Explanation",
+      "description": "Explain the Factory pattern. When would you use it instead of direct instantiation?",
+      "expected_patterns": ["factory", "creation", "abstraction", "encapsulation"],
+      "auto_eval_regex": [
+        "(?i)factory|create",
+        "(?i)abstract|encapsulat",
+        "(?i)decouple|depends"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "patterns_mid_090",
+      "level": "mid",
+      "category": "patterns",
+      "title": "Decorator Pattern for Cross-Cutting Concerns",
+      "description": "Implement decorators for logging and performance measurement. Stack multiple decorators.",
+      "expected_patterns": ["decorator", "aspect", "logging", "performance", "wrapping"],
+      "auto_eval_regex": [
+        "(?i)decorate|wrapper|aspect",
+        "(?i)logging|log",
+        "(?i)performance|time|duration",
+        "(?i)@|stack"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "patterns_senior_095",
+      "level": "senior",
+      "category": "patterns",
+      "title": "Strategy Pattern for Complex Business Logic",
+      "description": "Design pricing strategies (standard, premium, vip) using Strategy pattern. Show polymorphism and easy extension.",
+      "expected_patterns": ["strategy", "polymorphism", "encapsulation", "extensible", "context"],
+      "auto_eval_regex": [
+        "(?i)strateg|interface|implement",
+        "(?i)polymorph|context",
+        "(?i)extensible|easy.*add"
+      ],
+      "manual_eval_required": true
+    },
+    {
+      "id": "quality_junior_100",
+      "level": "junior",
+      "category": "quality",
+      "title": "Unit Test Basics",
+      "description": "Write unit tests for a simple function. Cover: happy path, edge cases, error cases. Use mocking.",
+      "expected_patterns": ["test", "assert", "mock", "edge case", "error"],
+      "auto_eval_regex": [
+        "(?i)def.*test|async.*test",
+        "(?i)assert|expect",
+        "(?i)mock|patch",
+        "(?i)case|edge|error|exception"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "quality_mid_105",
+      "level": "mid",
+      "category": "quality",
+      "title": "Integration Testing",
+      "description": "Write integration tests with real database. Test full workflow: create order → validate → save → verify.",
+      "expected_patterns": ["integration test", "database", "workflow", "verify"],
+      "auto_eval_regex": [
+        "(?i)test|integration",
+        "(?i)database|db|sql",
+        "(?i)fixture|setup",
+        "(?i)assert|verify"
+      ],
+      "manual_eval_required": false
+    },
+    {
+      "id": "quality_senior_110",
+      "level": "senior",
+      "category": "quality",
+      "title": "Code Review Standards",
+      "description": "Review a provided code snippet. Identify: correctness issues, performance problems, security risks, maintainability concerns. Provide specific fixes.",
+      "expected_patterns": ["review", "issue", "fix", "suggestion", "correctness", "performance"],
+      "auto_eval_regex": [
+        "(?i)issue|problem|risk|bug",
+        "(?i)fix|suggest|improve",
+        "(?i)performance|security|correct",
+        "(?i)example|code"
+      ],
+      "manual_eval_required": true
+    }
+  ]
+}

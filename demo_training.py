@@ -154,16 +154,17 @@ async def demo_training():
 
                 # Generate response from Ollama
                 print(f"      Generating response... ", end="", flush=True)
-                response = await ollama_client.generate(
+                response_data = await ollama_client.generate(
                     prompt=user_prompt,
                     temperature=config.GENERATION_TEMPERATURE,
                     top_p=config.GENERATION_TOP_P,
                     max_tokens=config.GENERATION_MAX_TOKENS
                 )
-                print(f"[OK] ({len(response)} chars)")
+                response_text = response_data.get("text", "")
+                print(f"[OK] ({len(response_text)} chars)")
 
                 # Evaluate response
-                result_dict = ResponseValidator.auto_evaluate(response, exercise)
+                result_dict = ResponseValidator.auto_evaluate(response_text, exercise)
 
                 # Record result
                 result = ExerciseResult(
@@ -176,7 +177,7 @@ async def demo_training():
                     regex_matched=result_dict["regex_matched"],
                     regex_total=result_dict["regex_total"],
                     requires_manual_review=result_dict["requires_manual_review"],
-                    response_length=len(response)
+                    response_length=len(response_text)
                 )
 
                 session_metrics.add_result(result)

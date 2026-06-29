@@ -102,14 +102,15 @@ class TrainingLoop:
                     try:
                         _, user_prompt, _ = prompt_builder.build_exercise_prompts(exercise)
 
-                        response = await ollama_client.generate(
+                        response_data = await ollama_client.generate(
                             prompt=user_prompt,
                             temperature=self.config.GENERATION_TEMPERATURE,
                             top_p=self.config.GENERATION_TOP_P,
                             max_tokens=self.config.GENERATION_MAX_TOKENS
                         )
+                        response_text = response_data.get("text", "")
 
-                        result_dict = ResponseValidator.auto_evaluate(response, exercise)
+                        result_dict = ResponseValidator.auto_evaluate(response_text, exercise)
 
                         result = ExerciseResult(
                             exercise_id=exercise.id,
@@ -121,7 +122,7 @@ class TrainingLoop:
                             regex_matched=result_dict['regex_matched'],
                             regex_total=result_dict['regex_total'],
                             requires_manual_review=result_dict['requires_manual_review'],
-                            response_length=len(response)
+                            response_length=len(response_text)
                         )
 
                         self.session_metrics.add_result(result)

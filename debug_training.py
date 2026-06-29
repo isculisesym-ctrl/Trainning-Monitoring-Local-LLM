@@ -111,20 +111,25 @@ async def debug():
             print(f"       Sending prompt to Ollama...")
             print(f"       Prompt: {user_prompt[:100]}...")
 
-            response = await ollama.generate(
+            response_data = await ollama.generate(
                 prompt=user_prompt,
                 temperature=0.7,
                 top_p=0.9,
                 max_tokens=500  # Shorter for testing
             )
 
-            print(f"[OK] Generated response: {len(response)} chars")
-            print(f"     Response preview: {response[:200]}...")
+            # Extract text from response dict
+            response_text = response_data.get("text", "")
+            tokens_in = response_data.get("tokens_input", 0)
+            tokens_out = response_data.get("tokens_output", 0)
+
+            print(f"[OK] Generated response: {len(response_text)} chars ({tokens_out} tokens)")
+            print(f"     Response preview: {response_text[:200]}...")
 
             # 7. Validation
             print("\n[7/7] Testing validation...")
             from src.training.validators import ResponseValidator
-            result = ResponseValidator.auto_evaluate(response, ex)
+            result = ResponseValidator.auto_evaluate(response_text, ex)
             print(f"[OK] Validation passed")
             print(f"     Quality score: {result['quality_score']:.1f}/10")
             print(f"     Success: {result['success']}")

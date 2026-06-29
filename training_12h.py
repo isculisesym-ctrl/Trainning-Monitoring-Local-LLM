@@ -105,7 +105,7 @@ class TrainingLoop:
                         prompt=user_prompt,
                         temperature=self.config.GENERATION_TEMPERATURE,
                         top_p=self.config.GENERATION_TOP_P,
-                        num_predict=self.config.GENERATION_MAX_TOKENS
+                        max_tokens=self.config.GENERATION_MAX_TOKENS
                     )
 
                     result_dict = ResponseValidator.auto_evaluate(response, exercise)

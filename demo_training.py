@@ -37,12 +37,12 @@ async def demo_training():
     # Load configuration
     try:
         config = get_training_config()
-        print(f"✓ Configuration loaded: {config.TRAINING_MODE} mode")
+        print(f"[OK] Configuration loaded: {config.TRAINING_MODE} mode")
         print(f"  - Corpus: {config.CORPUS_DIR}")
         print(f"  - Exercises: {config.EXERCISES_FILE}")
         print(f"  - Ollama: {config.OLLAMA_BASE_URL}/{config.OLLAMA_MODEL}\n")
     except Exception as e:
-        print(f"✗ Configuration error: {e}\n")
+        print(f"[ERROR] Configuration error: {e}\n")
         return
 
     # 1. Load corpus
@@ -51,13 +51,13 @@ async def demo_training():
     try:
         corpus_loader = get_corpus_loader()
         corpus = corpus_loader.load()
-        print(f"✓ Loaded {len(corpus)} corpus files")
+        print(f"[OK] Loaded {len(corpus)} corpus files")
         for key in corpus_loader.get_available_keys():
             size_kb = len(corpus_loader.get_corpus_content(key)) / 1024
             print(f"  - {key}: {size_kb:.1f} KB")
         print()
     except Exception as e:
-        print(f"✗ Failed to load corpus: {e}\n")
+        print(f"[ERROR] Failed to load corpus: {e}\n")
         return
 
     # 2. Load exercises
@@ -66,7 +66,7 @@ async def demo_training():
     try:
         exercise_loader = get_exercise_loader()
         exercises = exercise_loader.load()
-        print(f"✓ Loaded {len(exercises)} exercises")
+        print(f"[OK] Loaded {len(exercises)} exercises")
 
         # Count by level
         by_level = {level.value: 0 for level in Level}
@@ -77,7 +77,7 @@ async def demo_training():
             print(f"  - {level}: {count}")
         print()
     except Exception as e:
-        print(f"✗ Failed to load exercises: {e}\n")
+        print(f"[ERROR] Failed to load exercises: {e}\n")
         return
 
     # 3. Initialize training components
@@ -97,12 +97,12 @@ async def demo_training():
     try:
         connected = await ollama_client.check_connection()
         if connected:
-            print(f"✓ Connected to Ollama: {config.OLLAMA_MODEL}\n")
+            print(f"[OK] Connected to Ollama: {config.OLLAMA_MODEL}\n")
         else:
-            print(f"✗ Failed to connect to Ollama\n")
+            print(f"[ERROR] Failed to connect to Ollama\n")
             return
     except Exception as e:
-        print(f"✗ Ollama connection error: {e}\n")
+        print(f"[ERROR] Ollama connection error: {e}\n")
         print(f"  Make sure Ollama is running: ollama serve\n")
         return
 
@@ -131,10 +131,10 @@ async def demo_training():
         if ex:
             demo_exercises.append(ex)
         else:
-            print(f"✗ Exercise not found: {ex_id}")
+            print(f"[ERROR] Exercise not found: {ex_id}")
 
     if not demo_exercises:
-        print("✗ No exercises found!")
+        print("[ERROR] No exercises found!")
         return
 
     for i, exercise in enumerate(demo_exercises, 1):
@@ -151,9 +151,9 @@ async def demo_training():
                 prompt=user_prompt,
                 temperature=config.GENERATION_TEMPERATURE,
                 top_p=config.GENERATION_TOP_P,
-                num_predict=config.GENERATION_MAX_TOKENS
+                max_tokens=config.GENERATION_MAX_TOKENS
             )
-            print(f"✓ ({len(response)} chars)")
+            print(f"[OK] ({len(response)} chars)")
 
             # Evaluate response
             result_dict = ResponseValidator.auto_evaluate(response, exercise)
@@ -175,12 +175,12 @@ async def demo_training():
             session_metrics.add_result(result)
 
             # Print evaluation
-            status = "✓ PASS" if result.success else "✗ FAIL"
+            status = "[OK] PASS" if result.success else "[ERROR] FAIL"
             print(f"      Score: {result.quality_score:.1f}/10 {status}")
             print(f"      Patterns: {result.patterns_found}/{result.patterns_total}, Regex: {result.regex_matched}/{result.regex_total}")
 
         except Exception as e:
-            print(f"      ✗ Error: {e}")
+            print(f"      [ERROR] Error: {e}")
             import traceback
             traceback.print_exc()
             session_metrics.total_exercises += 1
@@ -208,7 +208,7 @@ async def demo_training():
     with open(session_file, "w") as f:
         json.dump(session_metrics_data, f, indent=2)
 
-    print(f"\n✓ Session saved to: {session_file}")
+    print(f"\n[OK] Session saved to: {session_file}")
 
     # 6. Corpus injection example
     print("\n" + "="*80)
@@ -225,7 +225,7 @@ async def demo_training():
     print(f"Corpus Context Injected ({len(corpus_text)} chars):")
     print(corpus_text[:300] + "...\n")
 
-    print("\n✓ FASE 1 DEMO COMPLETE")
+    print("\n[OK] FASE 1 DEMO COMPLETE")
     print("="*80)
     print("\nNext steps:")
     print("1. Run tests: pytest tests/training/")
@@ -237,10 +237,10 @@ if __name__ == "__main__":
     try:
         asyncio.run(demo_training())
     except KeyboardInterrupt:
-        print("\n\n✗ Demo interrupted by user")
+        print("\n\n[ERROR] Demo interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n✗ Demo failed: {e}")
+        print(f"\n\n[ERROR] Demo failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

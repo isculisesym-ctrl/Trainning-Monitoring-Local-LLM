@@ -1,37 +1,49 @@
 from pathlib import Path
-from pydantic_settings import BaseSettings
+
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    gateway_host: str = Field(default="127.0.0.1", env="GATEWAY_HOST")
-    gateway_port: int = Field(default=8000, env="GATEWAY_PORT")
-    debug: bool = Field(default=False, env="DEBUG")
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    """Application settings, loaded from environment variables / ``.env``.
 
-    ollama_base_url: str = Field(default="http://localhost:11434", env="OLLAMA_BASE_URL")
-    ollama_model: str = Field(default="qwen:7b-coder", env="OLLAMA_MODEL")
-    ollama_timeout: int = Field(default=300, env="OLLAMA_TIMEOUT")
+    Field names map case-insensitively to env vars (e.g. ``gateway_host`` <-
+    ``GATEWAY_HOST``), so no explicit ``env=`` aliases are required.
+    """
 
-    temperature: float = Field(default=0.7, env="TEMPERATURE")
-    top_p: float = Field(default=0.9, env="TOP_P")
-    max_tokens: int = Field(default=2048, env="MAX_TOKENS")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+    )
 
-    cache_type: str = Field(default="file", env="CACHE_TYPE")
-    cache_max_size: int = Field(default=1000, env="CACHE_MAX_SIZE")
-    semantic_similarity_threshold: float = Field(default=0.85, env="SEMANTIC_SIMILARITY_THRESHOLD")
-    cache_dir: Path = Field(default=Path("data/cache"), env="CACHE_DIR")
+    gateway_host: str = Field(default="127.0.0.1")
+    gateway_port: int = Field(default=8000)
+    debug: bool = Field(default=False)
+    log_level: str = Field(default="INFO")
 
-    rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
-    rate_limit_period: int = Field(default=60, env="RATE_LIMIT_PERIOD")
+    ollama_base_url: str = Field(default="http://localhost:11434")
+    ollama_model: str = Field(default="qwen:7b-coder")
+    ollama_timeout: int = Field(default=300)
 
-    prometheus_enabled: bool = Field(default=True, env="PROMETHEUS_ENABLED")
+    temperature: float = Field(default=0.7)
+    top_p: float = Field(default=0.9)
+    max_tokens: int = Field(default=2048)
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    cache_type: str = Field(default="file")
+    cache_max_size: int = Field(default=1000)
+    # Conservative default: only collapses near-duplicate prompts (whitespace,
+    # casing, word order, trivial filler). Lower it to cache more aggressively,
+    # at the risk of serving a cached answer to a differently-intended prompt.
+    semantic_similarity_threshold: float = Field(default=0.95)
+    cache_dir: Path = Field(default=Path("data/cache"))
 
-    def model_post_init(self, __context):
+    rate_limit_requests: int = Field(default=100)
+    rate_limit_period: int = Field(default=60)
+
+    prometheus_enabled: bool = Field(default=True)
+
+    def model_post_init(self, __context: object) -> None:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         Path("data/logs").mkdir(parents=True, exist_ok=True)
 

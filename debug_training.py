@@ -100,42 +100,41 @@ async def debug():
     # 6. Generate test response
     print("\n[6/7] Testing generation...")
     try:
-        ex = exercise_loader.get_exercise("arch_junior_001")
-        _, user_prompt, _ = builder.build_exercise_prompts(ex)
+        async with OllamaClient(
+            base_url=config.OLLAMA_BASE_URL,
+            model=config.OLLAMA_MODEL,
+            timeout=30
+        ) as ollama:
+            ex = exercise_loader.get_exercise("arch_junior_001")
+            _, user_prompt, _ = builder.build_exercise_prompts(ex)
 
-        print(f"       Sending prompt to Ollama...")
-        print(f"       Prompt: {user_prompt[:100]}...")
+            print(f"       Sending prompt to Ollama...")
+            print(f"       Prompt: {user_prompt[:100]}...")
 
-        response = await ollama.generate(
-            prompt=user_prompt,
-            temperature=0.7,
-            top_p=0.9,
-            max_tokens=500  # Shorter for testing
-        )
+            response = await ollama.generate(
+                prompt=user_prompt,
+                temperature=0.7,
+                top_p=0.9,
+                max_tokens=500  # Shorter for testing
+            )
 
-        print(f"[OK] Generated response: {len(response)} chars")
-        print(f"     Response preview: {response[:200]}...")
+            print(f"[OK] Generated response: {len(response)} chars")
+            print(f"     Response preview: {response[:200]}...")
+
+            # 7. Validation
+            print("\n[7/7] Testing validation...")
+            from src.training.validators import ResponseValidator
+            result = ResponseValidator.auto_evaluate(response, ex)
+            print(f"[OK] Validation passed")
+            print(f"     Quality score: {result['quality_score']:.1f}/10")
+            print(f"     Success: {result['success']}")
+            print(f"     Patterns found: {result['patterns_found']}/{result['patterns_total']}")
 
     except asyncio.TimeoutError:
         print(f"[ERROR] Generation timeout (Ollama slow or hanging)")
         return
     except Exception as e:
         print(f"[ERROR] Generation: {e}")
-        import traceback
-        traceback.print_exc()
-        return
-
-    # 7. Validation
-    print("\n[7/7] Testing validation...")
-    try:
-        from src.training.validators import ResponseValidator
-        result = ResponseValidator.auto_evaluate(response, ex)
-        print(f"[OK] Validation passed")
-        print(f"     Quality score: {result['quality_score']:.1f}/10")
-        print(f"     Success: {result['success']}")
-        print(f"     Patterns found: {result['patterns_found']}/{result['patterns_total']}")
-    except Exception as e:
-        print(f"[ERROR] Validation: {e}")
         import traceback
         traceback.print_exc()
         return

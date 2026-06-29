@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import BaseModel, Field
 
 
 class GenerationModeEnum(str, Enum):
@@ -11,20 +12,23 @@ class GenerationModeEnum(str, Enum):
 
 class GenerateRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=10000, description="Prompt para el modelo")
-    mode: GenerationModeEnum = Field(default="generate", description="Modo: generate, stream, o cached")
-    temperature: float = Field(default=None, ge=0.0, le=2.0, description="Control de creatividad")
-    top_p: float = Field(default=None, ge=0.0, le=1.0, description="Nucleus sampling")
-    max_tokens: int = Field(default=None, ge=1, le=4096, description="Máximo de tokens")
+    mode: GenerationModeEnum = Field(
+        default=GenerationModeEnum.GENERATE, description="Modo: generate, stream, o cached"
+    )
+    temperature: Optional[float] = Field(default=None, ge=0.0, le=2.0, description="Control de creatividad")
+    top_p: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Nucleus sampling")
+    max_tokens: Optional[int] = Field(default=None, ge=1, le=4096, description="Máximo de tokens")
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "prompt": "Write a Python function to sort a list",
                 "mode": "generate",
                 "temperature": 0.7,
-                "max_tokens": 500
+                "max_tokens": 500,
             }
         }
+    }
 
 
 class TokenCountRequest(BaseModel):
@@ -41,20 +45,6 @@ class GenerateResponse(BaseModel):
     mode: str
     cached: bool = Field(default=False, description="¿Fue obtenido de caché?")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "gen-12345",
-                "prompt": "Write a Python function to sort a list",
-                "response": "def sort_list(arr):\n    return sorted(arr)",
-                "tokens_input": 15,
-                "tokens_output": 20,
-                "tokens_total": 35,
-                "mode": "generate",
-                "cached": False
-            }
-        }
-
 
 class StreamChunk(BaseModel):
     chunk_id: int
@@ -63,7 +53,7 @@ class StreamChunk(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str = Field(..., enum=["healthy", "degraded", "unhealthy"])
+    status: Literal["healthy", "degraded", "unhealthy"]
     ollama_connected: bool
     cache_available: bool
     message: str = ""

@@ -26,7 +26,6 @@ tiktoken==0.5.2
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
-httpx-mock==0.3.0
 
 # Development
 black==23.12.0

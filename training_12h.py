@@ -27,6 +27,7 @@ from src.training.exercise_loader import get_exercise_loader
 from src.training.prompt_builder import PromptBuilder
 from src.training.validators import ResponseValidator
 from src.training.config import get_training_config
+from src.training.live_metrics import LiveMetricsCollector
 from src.checkpoint.checkpoint_types import SessionMetrics, ExerciseResult
 from src.ollama_client import OllamaClient
 
@@ -42,6 +43,7 @@ class TrainingLoop:
             session_id=self.session_id,
             started_at=datetime.now()
         )
+        self.live_metrics = LiveMetricsCollector()
 
     async def run(self):
         """Run 12-hour training loop"""
@@ -126,6 +128,18 @@ class TrainingLoop:
                         )
 
                         self.session_metrics.add_result(result)
+
+                        # Update live metrics for dashboard
+                        self.live_metrics.record_exercise(
+                            exercise_id=result.exercise_id,
+                            quality_score=result.quality_score,
+                            success=result.success,
+                            patterns_found=result.patterns_found,
+                            patterns_total=result.patterns_total,
+                            regex_matched=result.regex_matched,
+                            regex_total=result.regex_total,
+                            response_length=result.response_length
+                        )
 
                         status = '[OK]' if result.success else '[ERROR]'
                         logger.info(f'  Score: {result.quality_score:.1f}/10 {status}')

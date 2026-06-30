@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Dashboard - SR Consultant 12h</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4a90e2, #7cb342);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-line {
+            display: flex;
+            gap: 30px;
+            font-size: 14px;
+            color: #b0b0b0;
+        }
+
+        .status-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            background: #4a90e2;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-badge.running {
+            background: #7cb342;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #2d2d44;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            color: #4a90e2;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric {
+            margin-bottom: 15px;
+        }
+
+        .metric-label {
+            color: #a0a0a0;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .metric-value.success {
+            color: #7cb342;
+        }
+
+        .metric-value.danger {
+            color: #e74c3c;
+        }
+
+        .metric-bar {
+            width: 100%;
+            height: 6px;
+            background: #1e1e2e;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a90e2, #7cb342);
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .wide-chart {
+            grid-column: 1 / -1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+
+        table thead {
+            background: #1e1e2e;
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        table th {
+            padding: 10px;
+            text-align: left;
+            color: #4a90e2;
+            font-weight: 600;
+        }
+
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        table tr:hover {
+            background: #383855;
+        }
+
+        .status-ok {
+            color: #7cb342;
+        }
+
+        .status-fail {
+            color: #e74c3c;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #1e1e2e;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7cb342, #4a90e2);
+            transition: width 0.5s ease;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .comparison-item {
+            padding: 10px;
+            background: #1e1e2e;
+            border-radius: 4px;
+            border-left: 3px solid #4a90e2;
+        }
+
+        .comparison-label {
+            font-size: 11px;
+            color: #a0a0a0;
+            margin-bottom: 3px;
+        }
+
+        .comparison-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+
+        .comparison-value.improved {
+            color: #7cb342;
+        }
+
+        .delta {
+            font-size: 12px;
+            margin-top: 3px;
+            color: #7cb342;
+        }
+
+        .warning {
+            background: #3d3d2e;
+            border-left: 3px solid #e74c3c;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #4a5568;
+            color: #707080;
+            font-size: 12px;
+        }
+
+        .update-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #7cb342;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px 20px;
+            color: #707080;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Training Dashboard - Sr Consultant 12h</h1>
+            <div class="status-line">
+                <div class="status-item">
+                    <span>Status:</span>
+                    <div class="status-badge running">RUNNING</div>
+                </div>
+                <div class="status-item">
+                    <span>Last Update:</span>
+                    <span id="lastUpdate">--:--:--</span>
+                </div>
+                <div class="status-item">
+                    <span id="updateIndicator"></span>
+                    <span>Session 2 - Phase Tracking</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Session Elapsed Time -->
+            <div class="card">
+                <h3>Session Progress</h3>
+                <div class="metric">
+                    <div class="metric-label">Elapsed Time</div>
+                    <div class="metric-value" id="elapsedTime">0.0h</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <div style="font-size: 11px; color: #a0a0a0; margin-top: 5px;" id="progressLabel">0% (0.0h / 12.0h)</div>
+                </div>
+            </div>
+
+            <!-- Overall Success Rate -->
+            <div class="card">
+                <h3>Success Rate</h3>
+                <div class="metric">
+                    <div class="metric-label">Current</div>
+                    <div class="metric-value success" id="successRate">0.0%</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="successBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div style="font-size: 11px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #4a5568;">
+                    <div style="color: #a0a0a0; margin-bottom: 3px;">Target: 99.60%+</div>
+                    <div id="successDelta" style="color: #7cb342;">+0%</div>
+                </div>
+            </div>
+
+            <!-- Quality Score -->
+            <div class="card">
+                <h3>Quality Score</h3>
+                <div class="metric">
+                    <div class="metric-label">Average</div>
+                    <div class="metric-value" id="qualityScore">0.0/10</div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="qualityBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div style="font-size: 11px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #4a5568;">
+                    <div style="color: #a0a0a0; margin-bottom: 3px;">Target: 8.85+</div>
+                    <div id="qualityDelta" style="color: #7cb342;">+0</div>
+                </div>
+            </div>
+
+            <!-- Exercise Counter -->
+            <div class="card">
+                <h3>Exercises Completed</h3>
+                <div class="metric">
+                    <div class="metric-label">Total</div>
+                    <div class="metric-value" id="totalExercises">0</div>
+                </div>
+                <div style="font-size: 11px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #4a5568;">
+                    <div style="color: #7cb342; margin-bottom: 3px;" id="exerciseRate">0 ex/h</div>
+                    <div style="color: #a0a0a0;">Target: 900+</div>
+                </div>
+            </div>
+
+            <!-- Failures Tracker -->
+            <div class="card">
+                <h3>Failures Detected</h3>
+                <div class="metric">
+                    <div class="metric-label">Failed Exercises</div>
+                    <div class="metric-value" id="failureCount" style="color: #e74c3c;">0</div>
+                </div>
+                <div id="criticalFailures" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #4a5568;">
+                    <!-- Critical failures shown here -->
+                </div>
+            </div>
+
+            <!-- Comparison S1 vs S2 -->
+            <div class="card">
+                <h3>S1 vs S2 Comparison</h3>
+                <div class="comparison">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Success (S1)</div>
+                        <div class="comparison-value">99.53%</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Success (S2)</div>
+                        <div class="comparison-value" id="s2Success">--</div>
+                    </div>
+                </div>
+                <div class="comparison">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Quality (S1)</div>
+                        <div class="comparison-value">8.79</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Quality (S2)</div>
+                        <div class="comparison-value" id="s2Quality">--</div>
+                    </div>
+                </div>
+                <div class="delta" id="improvementDelta" style="margin-top: 10px; text-align: center;">--</div>
+            </div>
+
+            <!-- Success Rate Chart -->
+            <div class="card wide-chart">
+                <h3>Success Rate Trend</h3>
+                <div class="chart-container">
+                    <canvas id="successChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Quality Score Chart -->
+            <div class="card wide-chart">
+                <h3>Quality Score Trend</h3>
+                <div class="chart-container">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Exercise Type Performance -->
+            <div class="card wide-chart">
+                <h3>Performance by Exercise Type</h3>
+                <div class="chart-container">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Latest Exercises Table -->
+            <div class="card wide-chart">
+                <h3>Latest Exercises (Last 20)</h3>
+                <div class="table-container" id="latestTable">
+                    <div class="no-data">Waiting for exercises...</div>
+                </div>
+            </div>
+
+            <!-- Failures Table -->
+            <div class="card wide-chart" id="failuresCard" style="display: none;">
+                <h3>Failed Exercises</h3>
+                <div class="table-container" id="failuresTable"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Training Dashboard • Auto-refreshes every 2 seconds • Session 2 - Sr Consultant Training</p>
+        </div>
+    </div>
+
+    <script>
+        const METRICS_FILE = 'data/training_logs/live_metrics.json';
+        const S1_SUCCESS = 99.53;
+        const S1_QUALITY = 8.79;
+        let successChart, qualityChart, typeChart;
+        let metricsHistory = [];
+        let lastUpdate = null;
+
+        async function loadMetrics() {
+            try {
+                const response = await fetch(METRICS_FILE + '?t=' + Date.now());
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function updateLastUpdateTime(metrics) {
+            if (metrics.last_updated) {
+                const date = new Date(metrics.last_updated);
+                document.getElementById('lastUpdate').textContent =
+                    date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            const indicator = document.getElementById('updateIndicator');
+            indicator.innerHTML = '<span class="update-indicator"></span>';
+        }
+
+        function updateMetrics(metrics) {
+            if (!metrics) return;
+
+            updateLastUpdateTime(metrics);
+
+            // Elapsed time
+            const hours = metrics.current_hour || 0;
+            document.getElementById('elapsedTime').textContent = hours.toFixed(1) + 'h';
+            const progress = Math.min((hours / 12) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressLabel').textContent =
+                Math.round(progress) + '% (' + hours.toFixed(1) + 'h / 12.0h)';
+
+            // Success rate
+            const successRate = metrics.success_rate || 0;
+            document.getElementById('successRate').textContent = successRate.toFixed(2) + '%';
+            document.getElementById('successBar').style.width = Math.min(successRate, 100) + '%';
+            const successDelta = (successRate - S1_SUCCESS).toFixed(2);
+            document.getElementById('successDelta').textContent = (successDelta >= 0 ? '+' : '') + successDelta + '%';
+            if (parseFloat(successDelta) >= 0.07) {
+                document.getElementById('successDelta').style.color = '#7cb342';
+            }
+
+            // Quality score
+            const quality = metrics.avg_quality_score || 0;
+            document.getElementById('qualityScore').textContent = quality.toFixed(2) + '/10';
+            document.getElementById('qualityBar').style.width = Math.min((quality / 10) * 100, 100) + '%';
+            const qualityDelta = (quality - S1_QUALITY).toFixed(2);
+            document.getElementById('qualityDelta').textContent = (qualityDelta >= 0 ? '+' : '') + qualityDelta;
+            if (parseFloat(qualityDelta) >= 0.06) {
+                document.getElementById('qualityDelta').style.color = '#7cb342';
+            }
+
+            // Total exercises
+            const total = metrics.total_exercises || 0;
+            document.getElementById('totalExercises').textContent = total;
+            if (hours > 0) {
+                const rate = (total / hours).toFixed(1);
+                document.getElementById('exerciseRate').textContent = rate + ' ex/h';
+            }
+
+            // Failures
+            const failures = metrics.failed_exercises || 0;
+            document.getElementById('failureCount').textContent = failures;
+            if (failures > 0) {
+                document.getElementById('failuresCard').style.display = 'block';
+                updateFailuresTable(metrics.failures || []);
+            }
+
+            // S1 vs S2 comparison
+            document.getElementById('s2Success').textContent = successRate.toFixed(2) + '%';
+            document.getElementById('s2Quality').textContent = quality.toFixed(2);
+            const improvement = ((successRate - S1_SUCCESS) + (quality - S1_QUALITY) * 100) / 2;
+            if (improvement > 0) {
+                document.getElementById('improvementDelta').innerHTML =
+                    '<span style="color: #7cb342;">✓ Mejorando (delta: ' + improvement.toFixed(2) + ')</span>';
+            }
+
+            // Update history for charts
+            metricsHistory.push({
+                time: new Date(metrics.last_updated).getTime(),
+                successRate: successRate,
+                quality: quality,
+                exercises: total,
+                types: metrics.exercises_by_type || {}
+            });
+
+            // Keep only last 100 records
+            if (metricsHistory.length > 100) {
+                metricsHistory = metricsHistory.slice(-100);
+            }
+
+            // Update tables
+            updateLatestTable(metrics.latest_exercises || []);
+
+            // Update charts
+            updateCharts();
+        }
+
+        function updateLatestTable(exercises) {
+            const tbody = document.getElementById('latestTable');
+            if (exercises.length === 0) {
+                tbody.innerHTML = '<div class="no-data">Waiting for exercises...</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr>' +
+                '<th>Exercise</th>' +
+                '<th>Quality</th>' +
+                '<th>Status</th>' +
+                '<th>Patterns</th>' +
+                '<th>Regex</th>' +
+                '<th>Time</th>' +
+                '</tr></thead><tbody>';
+
+            for (let i = exercises.length - 1; i >= 0; i--) {
+                const ex = exercises[i];
+                const statusClass = ex.success ? 'status-ok' : 'status-fail';
+                const statusText = ex.success ? '✓ PASS' : '✗ FAIL';
+                const time = new Date(ex.timestamp).toLocaleTimeString('es-ES');
+                html += `<tr>
+                    <td><strong>${ex.exercise_id}</strong></td>
+                    <td>${ex.quality_score.toFixed(1)}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${ex.patterns}</td>
+                    <td>${ex.regex}</td>
+                    <td>${time}</td>
+                </tr>`;
+            }
+
+            html += '</tbody></table>';
+            tbody.innerHTML = html;
+        }
+
+        function updateFailuresTable(failures) {
+            const tbody = document.getElementById('failuresTable');
+            if (failures.length === 0) return;
+
+            let html = '<table><thead><tr>' +
+                '<th>Exercise</th>' +
+                '<th>Quality</th>' +
+                '<th>Patterns</th>' +
+                '<th>Regex</th>' +
+                '</tr></thead><tbody>';
+
+            for (const fail of failures) {
+                html += `<tr>
+                    <td><strong style="color: #e74c3c;">${fail.exercise_id}</strong></td>
+                    <td>${fail.quality_score.toFixed(1)}</td>
+                    <td>${fail.patterns}</td>
+                    <td>${fail.regex}</td>
+                </tr>`;
+            }
+
+            html += '</tbody></table>';
+            tbody.innerHTML = html;
+        }
+
+        function updateCharts() {
+            if (metricsHistory.length === 0) return;
+
+            const times = metricsHistory.map((m, i) => 'T' + (i * 0.1).toFixed(1) + 'h');
+            const successRates = metricsHistory.map(m => m.successRate);
+            const qualities = metricsHistory.map(m => m.quality);
+
+            // Success Rate Chart
+            if (!successChart) {
+                const ctx = document.getElementById('successChart').getContext('2d');
+                successChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: times,
+                        datasets: [{
+                            label: 'Current Session',
+                            data: successRates,
+                            borderColor: '#7cb342',
+                            backgroundColor: 'rgba(124, 179, 66, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }, {
+                            label: 'S1 Baseline',
+                            data: Array(times.length).fill(S1_SUCCESS),
+                            borderColor: '#4a90e2',
+                            borderDash: [5, 5],
+                            tension: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#b0b0b0' } }
+                        },
+                        scales: {
+                            y: {
+                                min: 98,
+                                max: 100,
+                                ticks: { color: '#a0a0a0' },
+                                grid: { color: '#4a5568' }
+                            },
+                            x: {
+                                ticks: { color: '#a0a0a0' },
+                                grid: { color: '#4a5568' }
+                            }
+                        }
+                    }
+                });
+            } else {
+                successChart.data.labels = times;
+                successChart.data.datasets[0].data = successRates;
+                successChart.data.datasets[1].data = Array(times.length).fill(S1_SUCCESS);
+                successChart.update();
+            }
+
+            // Quality Score Chart
+            if (!qualityChart) {
+                const ctx = document.getElementById('qualityChart').getContext('2d');
+                qualityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: times,
+                        datasets: [{
+                            label: 'Current Session',
+                            data: qualities,
+                            borderColor: '#7cb342',
+                            backgroundColor: 'rgba(124, 179, 66, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }, {
+                            label: 'S1 Baseline',
+                            data: Array(times.length).fill(S1_QUALITY),
+                            borderColor: '#4a90e2',
+                            borderDash: [5, 5],
+                            tension: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#b0b0b0' } }
+                        },
+                        scales: {
+                            y: {
+                                min: 8,
+                                max: 10,
+                                ticks: { color: '#a0a0a0' },
+                                grid: { color: '#4a5568' }
+                            },
+                            x: {
+                                ticks: { color: '#a0a0a0' },
+                                grid: { color: '#4a5568' }
+                            }
+                        }
+                    }
+                });
+            } else {
+                qualityChart.data.labels = times;
+                qualityChart.data.datasets[0].data = qualities;
+                qualityChart.data.datasets[1].data = Array(times.length).fill(S1_QUALITY);
+                qualityChart.update();
+            }
+        }
+
+        // Auto-refresh every 2 seconds
+        setInterval(async () => {
+            const metrics = await loadMetrics();
+            if (metrics) {
+                updateMetrics(metrics);
+            }
+        }, 2000);
+
+        // Initial load
+        loadMetrics().then(metrics => {
+            if (metrics) {
+                updateMetrics(metrics);
+            }
+        });
+    </script>
+</body>
+</html>

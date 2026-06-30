@@ -21,15 +21,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).parent))
+# Add training-dashboard path for metrics collection
+sys.path.insert(0, str(Path(__file__).parent.parent / "training-dashboard-monitoring"))
 
 from src.training.corpus_loader import get_corpus_loader
 from src.training.exercise_loader import get_exercise_loader
 from src.training.prompt_builder import PromptBuilder
 from src.training.validators import ResponseValidator
 from src.training.config import get_training_config
-from src.training.live_metrics import LiveMetricsCollector
 from src.checkpoint.checkpoint_types import SessionMetrics, ExerciseResult
 from src.ollama_client import OllamaClient
+
+# Import from training-dashboard-monitoring for dashboard integration
+try:
+    from src.metrics.client import MetricsCollector
+    DASHBOARD_ENABLED = True
+except ImportError:
+    DASHBOARD_ENABLED = False
+    logger.warning("Dashboard metrics not available (training-dashboard-monitoring not found)")
 
 
 class TrainingLoop:
@@ -43,7 +52,15 @@ class TrainingLoop:
             session_id=self.session_id,
             started_at=datetime.now()
         )
-        self.live_metrics = LiveMetricsCollector()
+
+        # Initialize dashboard metrics collector
+        self.dashboard_metrics = None
+        if DASHBOARD_ENABLED:
+            metrics_path = Path(__file__).parent.parent / "training-dashboard-monitoring" / "data" / "logs" / "metrics.json"
+            self.dashboard_metrics = MetricsCollector(str(metrics_path))
+            logger.info(f"Dashboard metrics enabled: {metrics_path}")
+        else:
+            logger.warning("Dashboard metrics disabled - continuing without real-time monitoring")
 
     async def run(self):
         """Run 12-hour training loop"""
@@ -129,17 +146,20 @@ class TrainingLoop:
 
                         self.session_metrics.add_result(result)
 
-                        # Update live metrics for dashboard
-                        self.live_metrics.record_exercise(
-                            exercise_id=result.exercise_id,
-                            quality_score=result.quality_score,
-                            success=result.success,
-                            patterns_found=result.patterns_found,
-                            patterns_total=result.patterns_total,
-                            regex_matched=result.regex_matched,
-                            regex_total=result.regex_total,
-                            response_length=result.response_length
-                        )
+                        # Update dashboard metrics in real-time
+                        if self.dashboard_metrics:
+                            self.dashboard_metrics.record_exercise(
+                                exercise_id=result.exercise_id,
+                                quality_score=result.quality_score,
+                                success=result.success,
+                                category=exercise.get('category', 'general'),
+                                details={
+                                    'patterns_found': result.patterns_found,
+                                    'patterns_total': result.patterns_total,
+                                    'regex_matched': result.regex_matched,
+                                    'regex_total': result.regex_total
+                                }
+                            )
 
                         status = '[OK]' if result.success else '[ERROR]'
                         logger.info(f'  Score: {result.quality_score:.1f}/10 {status}')

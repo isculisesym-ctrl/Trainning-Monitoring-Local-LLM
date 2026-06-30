@@ -99,3 +99,4 @@ tmp/
 .env.test
 config/secrets.yaml
 data/models/
+data/training_logs/live_metrics.json

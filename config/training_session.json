@@ -1,0 +1,9 @@
+{
+  "session_name": "Local LLM Training",
+  "description": "Fine-tuning a local language model",
+  "model_name": "neural-chat",
+  "training_categories": ["architecture", "patterns", "quality", "security", "scalability"],
+  "target_success_rate": 99.6,
+  "target_quality_score": 8.85,
+  "notes": "Edit anytime - dashboard auto-reloads"
+}

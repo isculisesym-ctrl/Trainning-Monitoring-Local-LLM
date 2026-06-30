@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Training Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 1800px; margin: 0 auto; }
+        h1 { color: #0ea5e9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 8px; }
+        .card h3 { color: #0ea5e9; margin-bottom: 10px; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #0ea5e9; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #0f172a; color: #0ea5e9; }
+        canvas { max-height: 300px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Training Dashboard Monitoring</h1>
+        <div class="grid">
+            <div class="card"><h3>Success Rate</h3><div class="metric-value" id="success">0%</div></div>
+            <div class="card"><h3>Quality Score</h3><div class="metric-value" id="quality">0/10</div></div>
+            <div class="card"><h3>Exercises</h3><div class="metric-value" id="total">0</div></div>
+            <div class="card"><h3>Failures</h3><div class="metric-value" id="failures">0</div></div>
+            <div class="card" style="grid-column: 1/-1;"><h3>Latest Exercises</h3><div id="table"></div></div>
+        </div>
+    </div>
+    <script>
+        async function refresh() {
+            const r = await fetch('/data/metrics');
+            if (!r.ok) return;
+            const data = await r.json();
+            document.getElementById('success').textContent = (data.success_rate || 0).toFixed(2) + '%';
+            document.getElementById('quality').textContent = (data.avg_quality_score || 0).toFixed(2) + '/10';
+            document.getElementById('total').textContent = data.total_exercises || 0;
+            document.getElementById('failures').textContent = data.failed_exercises || 0;
+            
+            let html = '<table><tr><th>Exercise</th><th>Quality</th><th>Status</th></tr>';
+            (data.latest_exercises || []).slice(-10).forEach(e => {
+                html += '<tr><td>' + e.exercise_id + '</td><td>' + e.quality_score + '</td><td>' + (e.success ? 'PASS' : 'FAIL') + '</td></tr>';
+            });
+            html += '</table>';
+            document.getElementById('table').innerHTML = html;
+        }
+        setInterval(refresh, 2000);
+        refresh();
+    </script>
+</body>
+</html>

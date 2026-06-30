@@ -35,12 +35,12 @@ class CorpusLoader:
                 self._validate_markdown(content, md_file.name)
 
                 self.corpus[key] = content
-                logger.info(f"✓ Loaded corpus: {md_file.name} ({len(content)} chars)")
+                logger.info(f"[OK] Loaded corpus: {md_file.name} ({len(content)} chars)")
             except Exception as e:
-                logger.error(f"✗ Failed to load {md_file.name}: {e}")
+                logger.error(f"[ERROR] Failed to load {md_file.name}: {e}")
                 raise
 
-        logger.info(f"✓ Total corpus loaded: {len(self.corpus)} files, {sum(len(c) for c in self.corpus.values())} chars")
+        logger.info(f"[OK] Total corpus loaded: {len(self.corpus)} files, {sum(len(c) for c in self.corpus.values())} chars")
         return self.corpus
 
     @staticmethod

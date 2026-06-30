@@ -21,7 +21,7 @@ class ClaudeCheckpointAuditor:
                 from anthropic import Anthropic
 
                 self.client = Anthropic(api_key=self.api_key)
-                logger.info(f"✓ Claude API initialized: {model}")
+                logger.info(f"[OK] Claude API initialized: {model}")
             except ImportError:
                 logger.warning("anthropic library not installed. Run: pip install anthropic")
             except Exception as e:
@@ -87,7 +87,7 @@ Provide feedback on:
                 "success": True,
             }
 
-            logger.info("✓ Checkpoint audit completed")
+            logger.info("[OK] Checkpoint audit completed")
             return result
 
         except Exception as e:

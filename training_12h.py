@@ -20,9 +20,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-sys.path.insert(0, str(Path(__file__).parent))
-# Add training-dashboard path for metrics collection
+# Add training-dashboard path for metrics collection (insert second so it's lower priority)
 sys.path.insert(0, str(Path(__file__).parent.parent / "training-dashboard-monitoring"))
+# Add project root path (insert after so it takes precedence)
+sys.path.insert(0, str(Path(__file__).parent))
 
 from src.training.corpus_loader import get_corpus_loader
 from src.training.exercise_loader import get_exercise_loader
@@ -56,9 +57,13 @@ class TrainingLoop:
         # Initialize dashboard metrics collector
         self.dashboard_metrics = None
         if DASHBOARD_ENABLED:
-            metrics_path = Path(__file__).parent.parent / "training-dashboard-monitoring" / "data" / "logs" / "metrics.json"
-            self.dashboard_metrics = MetricsCollector(str(metrics_path))
-            logger.info(f"Dashboard metrics enabled: {metrics_path}")
+            try:
+                metrics_path = Path(__file__).parent / "data" / "training_logs" / "live_metrics.json"
+                self.dashboard_metrics = MetricsCollector(str(metrics_path))
+                logger.info(f"Dashboard metrics enabled: {metrics_path}")
+            except Exception as e:
+                logger.error(f"Failed to initialize MetricsCollector: {e}")
+                self.dashboard_metrics = None
         else:
             logger.warning("Dashboard metrics disabled - continuing without real-time monitoring")
 
@@ -74,12 +79,12 @@ class TrainingLoop:
             logger.info('Loading corpus...')
             corpus_loader = get_corpus_loader()
             corpus = corpus_loader.load()
-            logger.info(f'✓ Loaded {len(corpus)} corpus files')
+            logger.info(f'[OK] Loaded {len(corpus)} corpus files')
 
             logger.info('Loading exercises...')
             exercise_loader = get_exercise_loader()
             exercises = exercise_loader.load()
-            logger.info(f'✓ Loaded {len(exercises)} exercises')
+            logger.info(f'[OK] Loaded {len(exercises)} exercises')
 
             prompt_builder = PromptBuilder(corpus_loader)
 
@@ -91,13 +96,13 @@ class TrainingLoop:
 
             connected = await ollama_client.check_connection()
             if not connected:
-                logger.error('✗ Failed to connect to Ollama')
+                logger.error('[ERROR] Failed to connect to Ollama')
                 return
 
-            logger.info(f'✓ Connected to Ollama: {self.config.OLLAMA_MODEL}')
+            logger.info(f'[OK] Connected to Ollama: {self.config.OLLAMA_MODEL}')
 
         except Exception as e:
-            logger.error(f'✗ Initialization error: {e}')
+            logger.error(f'[ERROR] Initialization error: {e}')
             return
 
         start_time = datetime.now()
@@ -148,18 +153,21 @@ class TrainingLoop:
 
                         # Update dashboard metrics in real-time
                         if self.dashboard_metrics:
-                            self.dashboard_metrics.record_exercise(
-                                exercise_id=result.exercise_id,
-                                quality_score=result.quality_score,
-                                success=result.success,
-                                category=exercise.get('category', 'general'),
-                                details={
-                                    'patterns_found': result.patterns_found,
-                                    'patterns_total': result.patterns_total,
-                                    'regex_matched': result.regex_matched,
-                                    'regex_total': result.regex_total
-                                }
-                            )
+                            try:
+                                self.dashboard_metrics.record_exercise(
+                                    exercise_id=result.exercise_id,
+                                    quality_score=result.quality_score,
+                                    success=result.success,
+                                    category=exercise.category,
+                                    details={
+                                        'patterns_found': result.patterns_found,
+                                        'patterns_total': result.patterns_total,
+                                        'regex_matched': result.regex_matched,
+                                        'regex_total': result.regex_total
+                                    }
+                                )
+                            except Exception as e:
+                                logger.error(f"Failed to record metrics: {e}")
 
                         status = '[OK]' if result.success else '[ERROR]'
                         logger.info(f'  Score: {result.quality_score:.1f}/10 {status}')

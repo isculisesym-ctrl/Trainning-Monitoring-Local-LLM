@@ -72,7 +72,7 @@ class ExerciseLoader:
                 self._validate_exercise(exercise)
                 self.exercises[exercise.id] = exercise
 
-            logger.info(f"✓ Loaded {len(self.exercises)} exercises from {self.exercises_file.name}")
+            logger.info(f"[OK] Loaded {len(self.exercises)} exercises from {self.exercises_file.name}")
             logger.info(f"  Distribution: {self._count_by_level()}")
             return self.exercises
 

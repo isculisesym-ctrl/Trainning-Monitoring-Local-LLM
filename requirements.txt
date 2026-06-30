@@ -1,0 +1,2 @@
+# Training Dashboard Monitoring - No external dependencies!
+# Uses Python standard library only (3.8+)

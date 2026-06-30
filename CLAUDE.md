@@ -59,6 +59,19 @@ python src/server/app.py
 python examples/training_simulator.py
 ```
 
+### Port Management Tool
+```bash
+# Start Port Manager (monitors all system ports)
+cd port_manager
+python server.py
+
+# Access at: http://localhost:4000
+# - View all ports in use
+# - See process names and PIDs
+# - Kill/restart stuck processes
+# - Real-time port mapping
+```
+
 ### Push Updates to GitHub
 ```bash
 # Only community/ folder is synced to git
@@ -83,6 +96,14 @@ git push origin main
 - Advanced monitoring
 - Custom metrics
 - Private utilities
+
+### `port_manager/` - Port Management Tool (NEW)
+- `server.py` - Port monitoring and process management API
+- `dashboard.html` - Web UI for port/process management
+- Detects stuck processes and hanging ports
+- Kill/restart processes directly from web interface
+- Real-time port mapping with process names
+- Runs on port 4000 by default
 
 ### Data & Logs
 - `data/logs/` - Training metrics (generated at runtime)
@@ -122,6 +143,14 @@ Uses Python stdlib only:
    - Target metrics
    - Training categories
    - Auto-reload on save
+
+5. **Port Manager** (`port_manager/server.py`)
+   - Real-time port scanning with WMI
+   - Process name resolution for all PIDs
+   - REST API (`/api/ports`) returns JSON with port data
+   - Kill process functionality with error handling
+   - Protected system processes (can't kill critical services)
+   - Web dashboard for interactive management
 
 ## Integration
 

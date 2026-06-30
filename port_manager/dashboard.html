@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Port Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: #0a0e27; color: #e2e8f0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #10b981; margin-bottom: 20px; font-size: 28px; }
+        .info { background: #1e293b; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #10b981; }
+        .info-text { font-size: 14px; color: #cbd5e1; }
+        .controls { margin-bottom: 20px; display: flex; gap: 10px; }
+        button { background: #10b981; color: #0a0e27; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        button:hover { background: #059669; transform: translateY(-2px); }
+        .port-table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 6px; overflow: hidden; }
+        .port-table th { background: #0f172a; color: #10b981; padding: 12px; text-align: left; font-weight: bold; border-bottom: 2px solid #334155; }
+        .port-table td { padding: 12px; border-bottom: 1px solid #334155; }
+        .port-table tr:hover { background: #334155; }
+        .port-row { display: flex; align-items: center; gap: 10px; }
+        .port-number { font-weight: bold; color: #10b981; font-size: 16px; }
+        .process-name { color: #cbd5e1; }
+        .pid { color: #94a3b8; font-size: 12px; }
+        .kill-btn { background: #ef4444; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .kill-btn:hover { background: #dc2626; }
+        .empty { text-align: center; padding: 40px; color: #64748b; }
+        .log-container { margin-top: 30px; }
+        .log-title { color: #10b981; font-size: 18px; margin-bottom: 15px; }
+        .log-table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 6px; overflow: hidden; font-size: 12px; }
+        .log-table th { background: #0f172a; color: #10b981; padding: 10px; text-align: left; }
+        .log-table td { padding: 8px; border-bottom: 1px solid #334155; }
+        .log-table tr:hover { background: #334155; }
+        .action-kill { color: #ef4444; font-weight: bold; }
+        .timestamp { color: #94a3b8; font-size: 11px; }
+        .refresh-indicator { color: #10b981; font-size: 12px; margin-left: 10px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #1e293b; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; }
+        .stat-label { color: #94a3b8; font-size: 12px; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #10b981; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 Port Manager</h1>
+
+        <div class="info">
+            <div class="info-text">
+                Real-time port monitoring • Kill stuck processes • Action history
+                <span class="refresh-indicator" id="refresh-status">● Updating...</span>
+            </div>
+        </div>
+
+        <div class="stat-grid" id="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Ports</div>
+                <div class="stat-value" id="total-ports">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Python Processes</div>
+                <div class="stat-value" id="python-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Last Refresh</div>
+                <div class="stat-value" id="last-refresh" style="font-size: 14px;">--:--</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="refreshPorts()">🔄 Refresh Now</button>
+            <button onclick="clearLog()" style="background: #6366f1;">📋 Clear History</button>
+        </div>
+
+        <div id="ports-container" class="empty">
+            Loading ports...
+        </div>
+
+        <div class="log-container">
+            <div class="log-title">📜 Action History (Last 20)</div>
+            <div id="log-container" class="empty">
+                Loading history...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString();
+        }
+
+        async function refreshPorts() {
+            try {
+                const response = await fetch('/api/ports');
+                if (!response.ok) return;
+
+                const ports = await response.json();
+                const portArray = Object.values(ports).sort((a, b) => a.port - b.port);
+
+                // Update stats
+                const pythonCount = portArray.filter(p => p.process.includes('python')).length;
+                document.getElementById('total-ports').textContent = portArray.length;
+                document.getElementById('python-count').textContent = pythonCount;
+                document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
+
+                if (portArray.length === 0) {
+                    document.getElementById('ports-container').innerHTML = '<div class="empty">No ports listening</div>';
+                    return;
+                }
+
+                let html = `
+                    <table class="port-table">
+                        <tr>
+                            <th>Port</th>
+                            <th>Process</th>
+                            <th>PID</th>
+                            <th>Action</th>
+                        </tr>
+                `;
+
+                portArray.forEach(port => {
+                    const isSafe = port.process.includes('svchost') ||
+                                   port.process.includes('System') ||
+                                   port.process.includes('dwm.exe') ||
+                                   port.port < 1024;
+
+                    html += `
+                        <tr>
+                            <td><div class="port-number">${port.port}</div></td>
+                            <td><div class="process-name">${port.process}</div></td>
+                            <td><div class="pid">PID: ${port.pid}</div></td>
+                            <td>
+                                ${isSafe ? '<span style="color: #94a3b8; font-size: 12px;">System</span>' : `<button class="kill-btn" onclick="killProcess(${port.pid}, ${port.port}, '${port.process}')">Kill</button>`}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += '</table>';
+                document.getElementById('ports-container').innerHTML = html;
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        async function killProcess(pid, port, process) {
+            if (!confirm(`Kill process "${process}" (PID: ${pid}) on port ${port}?`)) return;
+
+            try {
+                const response = await fetch('/api/kill', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pid, port, process })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(`✓ Process ${pid} killed successfully`);
+                    refreshPorts();
+                    refreshLog();
+                } else {
+                    alert(`✗ Failed to kill process`);
+                }
+            } catch (e) {
+                alert(`Error: ${e}`);
+            }
+        }
+
+        async function refreshLog() {
+            try {
+                const response = await fetch('/api/log');
+                if (!response.ok) return;
+
+                const log = await response.json();
+                const recent = log.slice(-20).reverse();
+
+                if (recent.length === 0) {
+                    document.getElementById('log-container').innerHTML = '<div class="empty">No actions recorded</div>';
+                    return;
+                }
+
+                let html = `
+                    <table class="log-table">
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Port</th>
+                            <th>Process</th>
+                        </tr>
+                `;
+
+                recent.forEach(entry => {
+                    html += `
+                        <tr>
+                            <td><span class="timestamp">${formatTime(entry.timestamp)}</span></td>
+                            <td><span class="action-kill">${entry.action.toUpperCase()}</span></td>
+                            <td>${entry.port}</td>
+                            <td>${entry.process}</td>
+                        </tr>
+                    `;
+                });
+
+                html += '</table>';
+                document.getElementById('log-container').innerHTML = html;
+            } catch (e) {
+                console.error('Error:', e);
+            }
+        }
+
+        function clearLog() {
+            if (!confirm('Clear all action history?')) return;
+            // In a real app, this would POST to a /api/clear-log endpoint
+            alert('History clearing not yet implemented');
+        }
+
+        // Refresh every 3 seconds
+        setInterval(() => {
+            refreshPorts();
+            refreshLog();
+        }, 3000);
+
+        // Initial load
+        refreshPorts();
+        refreshLog();
+    </script>
+</body>
+</html>
